@@ -1,5 +1,5 @@
 # Working Repo für WMC im 6. Semester
 
 Name: Veronika Wiesinger  
-Klasse: 6AKIF
+Klasse: 6AKIF 2024/25
 

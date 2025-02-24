@@ -1,0 +1,88 @@
+/* src/app/movies/MovieDetailView.module.css */
+.movieDetailContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .movieHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .movieTitle {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .movieYear {
+    font-size: 1.25rem;
+    color: #666;
+  }
+  
+  .moviePoster {
+    width: 100%;
+    max-width: 300px;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+  
+  .moviePlot {
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
+    color: #444;
+  }
+  
+  .movieRatings {
+    margin-top: 2rem;
+  }
+  
+  .movieRatings h3 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #444;
+  }
+  
+  .movieRatings ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .movieRatings li {
+    font-size: 1.125rem;
+    color: #555;
+  }
+  
+
+.backButton {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff; /* Blaue Hintergrundfarbe */
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2); /* Leichter Schatten */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .backButton:hover {
+    background-color: #0056b3; /* Dunklerer Blauton bei Hover */
+    transform: translateY(-2px); /* Button heben bei Hover */
+  }
+  
+  .backButton:active {
+    transform: translateY(2px); /* Button nach unten drücken bei Klick */
+  }
+  

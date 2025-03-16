@@ -77,7 +77,10 @@ export default function TodosClient({ todoItems, categories }: Props) {
                 <TodosDelete
                     todo={deleteState.todo}
                     onCancel={() => dispatchDelete({ type: null, todo: null })}
-                    onDeleted={() => dispatchDelete({ type: null, todo: null })} 
+                    onDeleted={() => {
+                        dispatchDelete({ type: null, todo: null });
+                        window.location.reload(); //UI sofort aktualisieren
+                    }}
                 />
             )}
         </div>

@@ -53,7 +53,7 @@ export function TodoAppStateProvider({ children }: { children: ReactNode }) {
      * Aktualisiert den aktiven Benutzer im State.
      * @param {string} value - Der Benutzername des aktiven Nutzers.
      */
-    const setActiveUser = (value: string) => setState(prev => ({ ...prev, activeUser: value }));
+    const setActiveUser = (value: string ) => setState(prev => ({ ...prev, activeUser: value }));
 
     return (
         <TodoAppContext.Provider value={{ ...state, actions: { setError, setActiveUser } }}>

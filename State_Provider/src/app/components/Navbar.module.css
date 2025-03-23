@@ -69,3 +69,25 @@
         box-shadow: 0 0 5px rgba(0, 0, 255, 0.3);
     }
 }
+
+/* Spezieller Stil für den Logout-Button */
+.logoutButton {
+    padding: 0.5em;
+    border: 1px solid black;
+    border-radius: 5px;
+    min-width: 5em;
+    text-align: center;
+    font-weight: bold;
+    background-color: white;
+    color: black;
+    transition: all 0.3s ease; /* Sanfte Übergänge */
+    cursor: pointer;
+}
+
+/* Hover-Effekt für den Logout-Button */
+.logoutButton:hover {
+    color: white;
+    background-color: darkblue;
+    transform: translateY(-2px); /* Hebt den Button minimal an */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}

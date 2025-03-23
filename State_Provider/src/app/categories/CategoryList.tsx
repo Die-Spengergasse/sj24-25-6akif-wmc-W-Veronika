@@ -53,22 +53,26 @@ export default function CategoryList({ categories }: { categories: Category[] })
           <li key={category.guid}>
             <div className={styles.categoryHeader}>
               <h2>{category.name}</h2>
-              <span
-                className={styles.editIcon}
-                onClick={() => {
-                  dispatcher({ intent: "edit", category: category })
-                }}
-                title="Edit"
-              >
-                ✏️
-              </span>
-              <span
-                className={styles.editIcon}
-                onClick={() => dispatcher({ intent: "delete", category: category })}
-                title="Delete"
-              >
-                🗑️
-              </span>
+              {todoAppState.activeUser && todoAppState.activeUser !== "Guest" && (
+                <>
+                  <span
+                    className={styles.editIcon}
+                    onClick={() => {
+                      dispatcher({ intent: "edit", category: category });
+                    }}
+                    title="Edit"
+                  >
+                    ✏️
+                  </span>
+                  <span
+                    className={styles.editIcon}
+                    onClick={() => dispatcher({ intent: "delete", category: category })}
+                    title="Delete"
+                  >
+                    🗑️
+                  </span>
+                </>
+              )}
             </div>
             <p>{category.description}</p>
             <p>Visible: {category.isVisible ? "yes" : "no"}</p>

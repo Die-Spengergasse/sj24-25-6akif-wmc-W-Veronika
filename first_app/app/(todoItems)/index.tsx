@@ -13,7 +13,8 @@ import { Category } from '@/types/Category';
 export default function TodoItemsIndexScreen() {
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>(""); // Default to "All Categories"
 
   /* async function loadTodoItems() {
     const response = await getTodoItems();
@@ -26,7 +27,7 @@ export default function TodoItemsIndexScreen() {
     }
   } */
 
-  async function loadTodoItems(category: string | null = selectedCategory) {
+  async function loadTodoItems(category: string | null | undefined = selectedCategory) {
     console.log("Loading Todos for category:", category);
     
     const response = await getTodoItems();

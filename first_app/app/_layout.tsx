@@ -14,6 +14,15 @@ export default function RootLayout() {
         }} 
       />
       <Tabs.Screen 
+        name="(todoItems)" 
+        options={{ 
+          title: 'Todo Items',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="checkmark-done" color={color} size={size} />
+          ),
+        }} 
+      />
+      <Tabs.Screen 
         name="about" 
         options={{ 
           title: 'About',

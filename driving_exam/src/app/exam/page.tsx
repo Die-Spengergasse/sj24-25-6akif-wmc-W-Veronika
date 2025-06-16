@@ -1,28 +1,32 @@
-"use client";
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
-import { apiClient } from "../utils/apiClient";
 import { Module, isModule } from "../types/Module";
+import { axiosInstance } from "../utils/apiClient";
 
-export default function ExamModulesPage() {
-  const [modules, setModules] = useState<Module[]>([]);
-
-  useEffect(() => {
-    apiClient.get("modules").then(res => {
-      setModules(res.data.filter(isModule));
-    });
-  }, []);
+export default async function ExamModulesPage() {
+  let modules: Module[] = [];
+  let error: string | null = null;
+  try {
+    const response = await axiosInstance.get("modules");
+    modules = response.data.filter(isModule);
+  } catch (e: any) {
+    error = e?.message ?? "Fehler beim Laden der Module";
+  }
 
   return (
     <div>
       <h1>Prüfungssimulation</h1>
-      <ul>
-        {modules.map(m => (
-          <li key={m.guid}>
-            <Link href={`/exam/${m.guid}`}>{m.name}</Link>
-          </li>
-        ))}
-      </ul>
+      {!error ? (
+        <ul>
+          {modules.map(m => (
+            <li key={m.guid}>
+              <Link href={`/exam/${m.guid}`}>{m.name}</Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="errorbox">{error}</div>
+      )}
     </div>
   );
 }

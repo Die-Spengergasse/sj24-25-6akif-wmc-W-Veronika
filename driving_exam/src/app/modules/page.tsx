@@ -1,28 +1,23 @@
-"use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { apiClient } from "../utils/apiClient";
-import { Module, isModule } from "../types/Module";
+import ModuleList from "./ModuleList";
+import ModuleAdd from "./ModuleAdd";
+import { getModules } from "./moduleApiClient";
+import { isErrorResponse } from "../utils/apiClient";
 
-export default function ModulesPage() {
-  const [modules, setModules] = useState<Module[]>([]);
-
-  useEffect(() => {
-    apiClient.get("modules").then(res => {
-      setModules(res.data.filter(isModule));
-    });
-  }, []);
+export default async function ModulesPage() {
+  const response = await getModules();
 
   return (
     <div>
       <h1>Module</h1>
-      <ul>
-        {modules.map(m => (
-          <li key={m.guid}>
-            <Link href={`/modules/${m.guid}`}>{m.name}</Link>
-          </li>
-        ))}
-      </ul>
+      {!isErrorResponse(response) ? (
+        <div>
+          <ModuleList modules={response} />
+          <h2>Modul hinzufügen</h2>
+          <ModuleAdd />
+        </div>
+      ) : (
+        <div className="errorbox">{response.message}</div>
+      )}
     </div>
   );
 }

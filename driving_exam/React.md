@@ -1910,3 +1910,874 @@ Verwende dafür die vorgefertigte Komponente _ModalDialog_ und gehe so vor:
 * Wurde ein User mit seinem Namen angemeldet, so soll in der Navbar auch ein Link zur Abmeldung angezeigt werden.
   Dieser Link soll einfach den aktuellen Usernamen löschen und dadurch die _NameInput_ Komponente anzeigen.
 * Ist kein User angemeldet, so soll in der Komponente _categoryList_ kein Edit oder Delete Button angezeigt werden.
+
+
+
+
+
+
+
+
+
+# Bsp mit todos und categories
+
+## Folder 'categories'
+
+CategoryAdd.modules.css
+---
+.categoryAdd {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+
+}
+
+.categoryAdd > div > div:first-child {
+    font-weight: bold;
+    align-self: center;
+}
+
+.categoryAdd > div > div:last-child {
+    display: flex;
+    align-items: center;
+}
+
+.categoryAdd input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.categoryAdd input[type="checkbox"] {
+    transform: scale(1.5);
+}
+
+.categoryAdd label {
+    margin-right: 10px;
+}
+
+.categoryAdd input[type="radio"] {
+    margin-left: 5px;
+}
+
+.categoryAdd button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.categoryAdd button:hover {
+    background-color: #45a049;
+}
+
+.error {
+    color: hsl(45, 100%, 60%);
+    position: relative; /* Ermöglicht die Positionierung des Pseudo-Elements */
+    padding-left: 20px; /* Platz für das Warnsymbol */
+    font-size: 16px;
+}
+
+.error::before {
+    content: "⚠️"; /* Warnsymbol */
+    color: hsl(45, 100%, 60%); /* Gelbe Warnfarbe */
+    font-size: 12px;
+    position: absolute;
+    left: 0; /* Links vom Text */
+    top: 50%;
+    transform: translateY(-50%); /* Vertikal zentrieren */
+    animation: blink 1s infinite; /* Blinkende Animation */
+}
+
+/* Animation für das Blink-Blink */
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1); /* Normal */
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(1.2); /* Vergrößert */
+    }
+}
+---
+
+CategoryAdd.tsx
+---
+"use client"
+
+import { createEmptyErrorResponse, ErrorResponse, isErrorResponse } from "@/app/utils/apiClient";
+import { addCategory } from "./categoryApiClient"
+import styles from "./CategoryAdd.module.css"
+import { Dispatch, FormEvent, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
+
+
+async function handleSubmit(event: FormEvent, setError: Dispatch<SetStateAction<ErrorResponse>>,
+    formRef: RefObject<HTMLFormElement>) {
+    event.preventDefault();
+    const response = await addCategory(new FormData(event.target as HTMLFormElement));
+    if (isErrorResponse(response))
+        setError(response);
+    else
+        formRef.current?.reset();
+}
+
+
+export default function CategoryAdd() {
+    // Für den Renderer brauchen wir ein leeres ErrorResponse object.
+    // Sonst würde bei error.validations.name auf ein undefined Objekt zugegriffen werden.
+    const [error, setError] = useState<ErrorResponse>(createEmptyErrorResponse());
+    const formRef = useRef<HTMLFormElement>(null);
+    // Sonst wird alert mehrfach angezeigt, wenn die Komponente mehrmals gerendert wird.
+    useEffect(() => { 
+        if (error.message) { alert(error.message);} 
+    }, [error]);
+
+    return (
+        <div>
+            <form onSubmit={e => handleSubmit(e, setError, formRef)} ref={formRef} className={styles.categoryAdd}>
+                <div>
+                    <div>Name</div>
+                    <div><input type="text" name="name" required /></div>
+                    <div>{error.validations.name && <span className={styles.error}>{error.validations.name}</span>}</div>
+                </div>
+                <div>
+                    <div>Description</div>
+                    <div><input type="text" name="description" required /></div>
+                    <div>{error.validations.description && <span className={styles.error}>{error.validations.description}</span>}</div>
+                </div>
+                <div>
+                    <div>Visible?</div>
+                    <div><input type="checkbox" name="isVisible" /></div>
+                    <div>{error.validations.isVisible && <span className={styles.error}>{error.validations.isVisible}</span>}</div>
+                </div>
+                <div>
+                    <div>Priority</div>
+                    <div>
+                        {["Low", "Medium", "High"].map(p => {
+                            const id = `priority_${p}`.toLowerCase();
+                            return <label key={p} htmlFor={id}>{p}<input type="radio" id={id} name="priority" value={p} required /></label>
+                        })}
+                    </div>
+                    <div>{error.validations.priority && <span className={styles.error}>{error.validations.priority}</span>}</div>
+                </div>
+                <div>
+                    <div>&nbsp;</div>
+                    <div><button type="submit">Submit</button></div>
+                </div>
+            </form>
+        </div>
+    )
+}
+---
+
+categoryApiClient.ts
+---
+"use server";
+import { ErrorResponse, axiosInstance, createErrorResponse } from "@/app/utils/apiClient";
+import { revalidatePath } from "next/cache";
+import { Category, isCategory } from "@/app/types/Category";
+import exp from "constants";
+
+export async function getCategories(): Promise<Category[] | ErrorResponse> {
+    try {
+        const categoriesResponse = await axiosInstance.get<Category[]>("categories");
+        return categoriesResponse.data.filter(isCategory);
+    }
+    catch (e) {
+        return createErrorResponse(e);
+    }
+}
+
+export async function getCategory(guid: string): Promise<Category | ErrorResponse> {
+    try {
+        const categoryResponse = await axiosInstance.get<Category>(`categories/${guid}`);
+        if (isCategory(categoryResponse.data)) {
+            return categoryResponse.data;
+        }
+        return createErrorResponse(new Error("Invalid category data"));
+    }
+    catch (e) {
+        return createErrorResponse(e);
+    }
+}
+
+export async function addCategory(formData: FormData): Promise<ErrorResponse | undefined> {
+    // Extrahiere Daten aus dem Formular
+    const data = {
+        name: formData.get("name"),
+        description: formData.get("description"),
+        isVisible: !!formData.get("isVisible"),     // converts null to false.
+        priority: formData.get("priority"),
+    };
+
+    try {
+        // Sende einen POST-Request an die API
+        await axiosInstance.post("categories", data);
+        revalidatePath("/categories");
+    } catch (e) {
+        return createErrorResponse(e);
+    }
+}
+
+export async function editCategory(formData: FormData): Promise<ErrorResponse | undefined> {
+    // Extrahiere Daten aus dem Formular
+    const guid = formData.get("guid");
+    if (!guid) {
+        return createErrorResponse(new Error("Invalid guid"));
+    }
+    const data = {
+        guid: guid,
+        name: formData.get("name"),
+        description: formData.get("description"),
+        isVisible: !!formData.get("isVisible"),     // converts null to false.
+        priority: formData.get("priority"),
+    };
+
+    try {
+        // Sende einen PUT-Request an die API
+        await axiosInstance.put(`categories/${guid}`, data);
+        revalidatePath("/categories");
+    } catch (e) {
+        return createErrorResponse(e);
+    }
+}
+
+export async function deleteCategory(guid: string): Promise<ErrorResponse | undefined> {
+    try {
+        await axiosInstance.delete(`categories/${guid}`);
+        revalidatePath("/categories");
+    } catch (e) {
+        return createErrorResponse(e);
+    }
+}
+---
+
+CategoryDelete.tsx
+---
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import ModalDialog from "../components/ModalDialog";
+import { Category } from "../types/Category";
+import { createEmptyErrorResponse, ErrorResponse, isErrorResponse } from "../utils/apiClient";
+import { deleteCategory } from "./categoryApiClient";
+
+type CategoryDeleteProps = {
+    category: Category;
+    onCancel: () => void;
+    onDeleted: () => void;
+}
+async function handleSubmit(
+    categoryGuid: string,
+    setError: Dispatch<SetStateAction<ErrorResponse>>,
+    onDeleted: () => void
+) {
+    const response = await deleteCategory(categoryGuid);
+    if (isErrorResponse(response)) {
+        setError(response);
+    } else {
+        onDeleted();
+    }
+}
+
+
+export default function CategoryDelete({ category, onCancel, onDeleted }: CategoryDeleteProps) {
+    const [error, setError] = useState<ErrorResponse>(createEmptyErrorResponse());
+    useEffect(() => {
+        if (error.message) {
+            alert(error.message);
+        }
+    }, [error]);
+    return (
+        <div>
+            <ModalDialog
+                title={`Delete Category ${category.name}`}
+                onCancel={onCancel}
+                onOk={() => handleSubmit(category.guid, setError, onDeleted)}>
+                <p>Möchtest du die Kategorie {category.name} wirklich löschen?</p>
+            </ModalDialog>
+        </div>
+    );
+
+}
+---
+
+CategoryEdit.module.css
+---
+.categoryEdit {
+    display: grid;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+
+    --grid-layout-gap: 10px;
+    --grid-column-count: 2;
+    --grid-item--min-width: 30em;
+
+    --gap-count: calc(var(--grid-column-count) - 1);
+    --total-gap-width: calc(var(--gap-count) * var(--grid-layout-gap));
+    --grid-item--max-width: calc((100% - var(--total-gap-width)) / var(--grid-column-count));
+
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--grid-item--min-width), var(--grid-item--max-width)), 1fr));
+    gap: var(--grid-layout-gap);
+
+}
+
+.categoryEdit>div>div:first-child {
+    font-weight: bold;
+    align-self: center;
+}
+
+.categoryEdit>div>div:last-child {
+    display: flex;
+    align-items: center;
+}
+
+.categoryEdit input[type="text"],
+.categoryEdit textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.categoryEdit input[type="checkbox"] {
+    transform: scale(1.5);
+}
+
+.categoryEdit label {
+    margin-right: 10px;
+}
+
+.categoryEdit input[type="radio"] {
+    margin-left: 5px;
+}
+
+.error {
+    color: hsl(45, 100%, 60%);
+    position: relative;
+    /* Ermöglicht die Positionierung des Pseudo-Elements */
+    padding-left: 20px;
+    /* Platz für das Warnsymbol */
+    font-size: 16px;
+}
+
+.error::before {
+    content: "⚠️";
+    /* Warnsymbol */
+    color: hsl(45, 100%, 60%);
+    /* Gelbe Warnfarbe */
+    font-size: 12px;
+    position: absolute;
+    left: 0;
+    /* Links vom Text */
+    top: 50%;
+    transform: translateY(-50%);
+    /* Vertikal zentrieren */
+    animation: blink 1s infinite;
+    /* Blinkende Animation */
+}
+
+/* Animation für das Blink-Blink */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+        /* Normal */
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(1.2);
+        /* Vergrößert */
+    }
+}
+---
+
+CategoryEdit.tsx
+---
+import React, { Dispatch, FormEvent, useEffect, useImperativeHandle, useRef, useState, SetStateAction } from "react";
+import { createEmptyErrorResponse, ErrorResponse, isErrorResponse } from "@/app/utils/apiClient";
+import { Category } from "@/app/types/Category";
+import { editCategory } from "./categoryApiClient";
+import styles from "./CategoryEdit.module.css";
+
+export type CategoryEditRef = {
+  startSubmit: () => void;
+}
+
+type CategoryEditProps = {
+  category: Category;
+  onSubmitted: () => void;
+  ref?: React.Ref<CategoryEditRef>; // Ref as prop
+}
+
+async function handleSubmit(
+  event: FormEvent,
+  setError: Dispatch<SetStateAction<ErrorResponse>>,
+  onSubmitted: () => void
+) {
+  event.preventDefault();
+  const response = await editCategory(new FormData(event.target as HTMLFormElement));
+  if (isErrorResponse(response)) {
+    setError(response);
+  } else {
+    onSubmitted();
+  }
+}
+
+export default function CategoryEdit(props: CategoryEditProps) {
+  const { category, onSubmitted, ref } = props;
+  const formRef = useRef<HTMLFormElement>(null);
+  const [error, setError] = useState<ErrorResponse>(createEmptyErrorResponse());
+
+  // UseImperativeHandle for custom methods exposed to the parent
+  useImperativeHandle(ref, () => ({
+    startSubmit: () => {
+      formRef.current?.requestSubmit();
+    },
+  }));
+
+  useEffect(() => {
+    if (error.message) {
+      alert(error.message);
+    }
+  }, [error]);
+
+  return (
+    <div>
+      <form
+        onSubmit={(e) => handleSubmit(e, setError, onSubmitted)}
+        ref={formRef}
+        className={styles.categoryEdit}
+      >
+        <input type="hidden" name="guid" value={category.guid} />
+        <div>
+          <div>Name</div>
+          <div>
+            <input type="text" name="name" defaultValue={category.name} required />
+          </div>
+          <div>
+            {error.validations.name && (
+              <span className={styles.error}>{error.validations.name}</span>
+            )}
+          </div>
+        </div>
+        <div>
+          <div>Description</div>
+          <div>
+            <textarea name="description" defaultValue={category.description} required />
+          </div>
+          <div>
+            {error.validations.description && (
+              <span className={styles.error}>{error.validations.description}</span>
+            )}
+          </div>
+        </div>
+        <div>
+          <div>Visible?</div>
+          <div>
+            <input type="checkbox" name="isVisible" defaultChecked={category.isVisible} />
+          </div>
+          <div>
+            {error.validations.isVisible && (
+              <span className={styles.error}>{error.validations.isVisible}</span>
+            )}
+          </div>
+        </div>
+        <div>
+          <div>Priority</div>
+          <div>
+            {["Low", "Medium", "High"].map((p) => {
+              const id = `priority_${p}`.toLowerCase();
+              return (
+                <label key={p} htmlFor={id}>
+                  {p}
+                  <input
+                    type="radio"
+                    id={id}
+                    name="priority"
+                    value={p}
+                    defaultChecked={category.priority === p}
+                    required
+                  />
+                </label>
+              );
+            })}
+          </div>
+          <div>
+            {error.validations.priority && (
+              <span className={styles.error}>{error.validations.priority}</span>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+---
+
+CategoryList.modules.css
+---
+.categories ul {
+    list-style-type: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15em, 1fr));
+    gap: 10px;
+    margin: 0 auto;
+  }
+  
+  .categories li {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .categories li h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #0070f3;
+  }
+  
+  .categories li p {
+    margin: 5px 0;
+    color: #666;
+  }
+  
+   .categoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .editIcon {
+    font-size: 14px;
+    cursor: pointer;
+    color: #0070f3;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  
+  .editIcon:hover {
+    transform: scale(1.2);
+    color: #005bb5;
+  }
+---
+
+CategoryList.tsx
+---
+"use client";
+import React, { useReducer, useRef } from "react";
+import { Category } from "@/app/types/Category";
+import ModalDialog from "@/app/components/ModalDialog";
+import CategoryEdit, { CategoryEditRef } from "./CategoryEdit";
+import styles from "./CategoryList.module.css";
+import CategoryDelete from "./CategoryDelete";
+
+// Discriminated unions in typescript
+type ReducerAction =
+  | { resetState: true }
+  | { resetState?: false; intent: "edit" | "delete"; category: Category };
+type CategoryListState =
+  | { dialogType: "" }
+  | { dialogType: "error"; error: string }
+  | { dialogType: "edit" | "delete"; category: Category };
+
+function reducer(
+  state: CategoryListState,
+  action: ReducerAction): CategoryListState {
+  if (action.resetState) return { dialogType: "" }
+  switch (action.intent ) {
+    case "edit":
+      if (action.category.isVisible)
+        return { category: action.category, dialogType: "edit" };
+      else
+        return { dialogType: "error", error: "You cannot edit an invisible category." }
+    case "delete":
+      return { category: action.category, dialogType: "delete" };
+    default:
+      return { dialogType: "" };
+  }
+}
+export default function CategoryList({ categories }: { categories: Category[] }) {
+  const [state, dispatcher] = useReducer(reducer, { dialogType: "" });
+  const categoryEditRef = useRef<CategoryEditRef>(null);
+  return (
+    <div className={styles.categories}>
+      <ul>
+        {categories.map(category => (
+          <li key={category.guid}>
+            <div className={styles.categoryHeader}>
+              <h2>{category.name}</h2>
+              <span
+                className={styles.editIcon}
+                onClick={() => dispatcher({ intent: "edit", category: category })}
+                title="Edit"
+              >
+                ✏️
+              </span>
+              <span
+                className={styles.editIcon}
+                onClick={() => dispatcher({ intent: "delete", category: category })}
+                title="Delete"
+              >
+                🗑️
+              </span>
+            </div>
+            <p>{category.description}</p>
+            <p>Visible: {category.isVisible ? "yes" : "no"}</p>
+          </li>
+        ))}
+      </ul>
+
+      {state.dialogType == "error" && (
+        <ModalDialog title="Error"
+          onOk={() => dispatcher({ resetState: true })}
+          onCancel={() => dispatcher({ resetState: true })}>
+          {state.error}
+        </ModalDialog>
+
+      )}
+      {state.dialogType == "edit" && (
+        <ModalDialog title={`Edit ${state.category.name}`}
+          onOk={() => categoryEditRef.current?.startSubmit()}
+          onCancel={() => dispatcher({ resetState: true })}>
+          <CategoryEdit category={state.category}
+            ref={categoryEditRef}
+            onSubmitted={() => dispatcher({ resetState: true })} />
+        </ModalDialog>
+      )}
+      {state.dialogType == "delete" && (
+        <CategoryDelete category={state.category}
+          onCancel={() => dispatcher({ resetState: true })}
+          onDeleted={() => dispatcher({ resetState: true })} />
+      )}
+    </div>
+  );
+}
+---
+
+page.tsx
+---
+import CategoryList from "./CategoryList";
+import CategoryAdd from "./CategoryAdd";
+import { getCategories } from "./categoryApiClient";
+import { isErrorResponse } from "../utils/apiClient";
+
+export default async function CategoryPage() {
+  const response = await getCategories();
+
+  return (
+    <div>
+      <h1>Categories</h1>
+      {!isErrorResponse(response) ? (
+        <div>
+          <CategoryList categories={response} />
+          <h2>Add category</h2>
+          <CategoryAdd />
+        </div>
+      )
+        : <div className="errorbox">{response.message}</div>}
+
+    </div>
+  );
+}
+---
+
+## Folder 'todos'
+
+page.tsx
+---
+import https from "https";
+import TodosClient from "./TodosClient";
+import { isTodoItem } from "../types/TodoItem";
+import { isCategory } from "../types/Category";
+import { axiosInstance } from "../utils/apiClient";
+
+export default async function TodosPage() {
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  });
+
+  // Categories laden, um das Dropdown befüllen zu können.
+  const categoriesResponse = await axiosInstance.get("categories", { httpsAgent: agent });
+  const categories = categoriesResponse.data.filter(isCategory);
+
+  // TodoItems laden, um die Items anzeigen zu können
+  const todoItemsResponse = await axiosInstance.get("todoItems", { httpsAgent: agent });
+  const todoItems = todoItemsResponse.data.filter(isTodoItem);
+
+
+  return <TodosClient todoItems={todoItems} categories={categories} />;
+}
+---
+
+style.module.css
+---
+  .categories select {
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  .categories ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .categories li {
+    background-color: #fff;
+    margin: 10px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .categories li h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #0070f3;
+  }
+  
+  .categories li p {
+    margin: 5px 0;
+    color: #666;
+  }
+  
+  .categories .overdue {
+    border:2px solid red;
+    background-color: hsl(0, 100%, 90%)
+  }
+---
+
+TodosClient.tsx
+---
+'use client';
+
+import { useState } from "react";
+import { TodoItem } from "../types/TodoItem";
+import { Category } from "../types/Category";
+import styles from "./style.module.css";
+
+type Props = {
+    todoItems: TodoItem[];
+    categories: Category[];
+};
+
+export default function TodosClient({ todoItems, categories }: Props) {
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+    const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedCategory(event.target.value);
+    };
+
+    const filteredTodoItems = selectedCategory
+        ? todoItems.filter(item => item.categoryName === selectedCategory)
+        : todoItems;
+
+    return (
+        <div className={styles.categories}>
+            <h1>Todo Liste</h1>
+            <select onChange={handleCategoryChange}>
+                <option value="">Alle Kategorien</option>
+                {categories.map(category => (
+                    <option key={category.guid} value={category.name}>
+                        {category.name}
+                    </option>
+                ))}
+            </select>
+
+            <ul>
+                {filteredTodoItems.map(item => (
+                    <li
+                        key={item.guid}
+                        className={
+                            new Date(item.dueDate) < new Date() ? styles.overdue : styles.onTime
+                        }
+                    >
+                        <h2>{item.title}</h2>
+                        <p>{item.description}</p>
+                        <p>Kategorie: {item.categoryName} (GUID {item.categoryGuid})</p>
+                        <p>Fällig am: {new Date(item.dueDate).toLocaleDateString()}</p>
+                        <p>Status: {item.isCompleted ? "Abgeschlossen" : "Ausstehend"}</p>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+---
+
+
+## Folder 'types'
+
+Category.ts
+---
+export interface Category {
+    guid: string;
+    name: string;
+    description: string;
+    isVisible: boolean;
+    priority: string;
+    ownerName: string;
+  }
+  
+  export function isCategory(item: any): item is Category {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "name" in item &&
+      "description" in item &&
+      "isVisible" in item &&
+      "priority" in item &&
+      "ownerName" in item
+    );
+  }
+---
+
+TodoItem.ts
+---
+export interface TodoItem {
+    guid: string;
+    title: string;
+    description: string;
+    categoryGuid: string;
+    categoryName: string;
+    categoryPriority: string;
+    categoryIsVisible: boolean;
+    isCompleted: boolean;
+    dueDate: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  
+  export function isTodoItem(item: any): item is TodoItem {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "title" in item &&
+      "description" in item &&
+      "categoryGuid" in item &&
+      "categoryName" in item &&
+      "categoryPriority" in item &&
+      "categoryIsVisible" in item &&
+      "isCompleted" in item &&
+      "dueDate" in item &&
+      "createdAt" in item &&
+      "updatedAt" in item
+    );
+  }
+---

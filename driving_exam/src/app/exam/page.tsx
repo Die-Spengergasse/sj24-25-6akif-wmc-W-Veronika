@@ -4,7 +4,7 @@ import Link from "next/link";
 import { apiClient } from "../utils/apiClient";
 import { Module, isModule } from "../types/Module";
 
-export default function ModulesPage() {
+export default function ExamModulesPage() {
   const [modules, setModules] = useState<Module[]>([]);
 
   useEffect(() => {
@@ -15,11 +15,11 @@ export default function ModulesPage() {
 
   return (
     <div>
-      <h1>Module</h1>
+      <h1>Prüfungssimulation</h1>
       <ul>
         {modules.map(m => (
           <li key={m.guid}>
-            <Link href={`/modules/${m.guid}`}>{m.name}</Link>
+            <Link href={`/exam/${m.guid}`}>{m.name}</Link>
           </li>
         ))}
       </ul>

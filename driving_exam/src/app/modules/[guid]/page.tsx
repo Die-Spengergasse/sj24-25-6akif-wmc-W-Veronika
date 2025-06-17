@@ -1,33 +1,23 @@
-import TopicList from "@/app/topics/TopicList";
-import TopicAdd from "@/app/topics/TopicAdd";
-import { getTopics } from "@/app/topics/topicApiClient";
-import { isErrorResponse } from "@/app/utils/apiClient";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export default async function TopicsPage(props: { params: { guid: string } }) {
-  const params = await props.params; // await wie in der Fehlermeldung verlangt
-  const response = await getTopics(params.guid);
+import { axiosInstance } from "@/app/utils/apiClient";
+import { isTopic } from "@/app/types/Topic";
+import Link from "next/link";
 
-  if (isErrorResponse(response)) {
-    return <div className="errorbox">{response.message || "Fehler beim Laden der Themen."}</div>;
-  }
-
-  if (Array.isArray(response) && response.length === 0) {
-    return (
-      <div>
-        <h1>Themen</h1>
-        <div className="errorbox">Für dieses Modul sind keine Themen vorhanden.</div>
-        <h2>Thema hinzufügen</h2>
-        <TopicAdd moduleGuid={params.guid} />
-      </div>
-    );
-  }
+export default async function TopicsPage({ params }: { params: { guid: string } }) {
+  const response = await axiosInstance.get(`topics?assignedModule=${params.guid}`);
+  const topics = response.data.filter(isTopic);
 
   return (
     <div>
       <h1>Themen</h1>
-      <TopicList topics={response} moduleGuid={params.guid} />
-      <h2>Thema hinzufügen</h2>
-      <TopicAdd moduleGuid={params.guid} />
+      <ul>
+        {topics.map((topic: any) => (
+          <li key={topic.guid}>
+            <Link href={`/modules/${params.guid}/topics/${topic.guid}`}>{topic.name}</Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -2781,3 +2781,328 @@ export interface TodoItem {
     );
   }
 ---
+
+
+
+
+# Bsp auf Todos klicken und alle TodoTasks bekommen
+
+Es gibt die Folder about, component, todos und types
+
+## Folder types
+
+Category.ts
+---
+export interface Category {
+    guid: string;
+    name: string;
+    description: string;
+    isVisible: boolean;
+    priority: string;
+    ownerName: string;
+  }
+  
+  export function isCategory(item: any): item is Category {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "name" in item &&
+      "description" in item &&
+      "isVisible" in item &&
+      "priority" in item &&
+      "ownerName" in item
+    );
+  }
+---
+
+TodoItem.ts
+---
+export interface TodoItem {
+    guid: string;
+    title: string;
+    description: string;
+    categoryName: string;
+    categoryPriority: string;
+    categoryIsVisible: boolean;
+    isCompleted: boolean;
+    dueDate: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  
+  export function isTodoItem(item: any): item is TodoItem {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "title" in item &&
+      "description" in item &&
+      "categoryName" in item &&
+      "categoryPriority" in item &&
+      "categoryIsVisible" in item &&
+      "isCompleted" in item &&
+      "dueDate" in item &&
+      "createdAt" in item &&
+      "updatedAt" in item
+    );
+  }
+---
+
+TodoItemDetail.ts
+---
+export interface TodoItemDetail {
+    guid: string;
+    title: string;
+    description: string;
+    categoryName: string;
+    categoryPriority: string;
+    isCompleted: boolean;
+    dueDate: string;
+    createdAt: string;
+    updatedAt: string;
+    todoTasks: TodoTask[]; // Das Array mit den Todo-Tasks
+  }
+  
+  export interface TodoTask {
+    guid: string;
+    title: string;
+    isCompleted: boolean;
+    dueDate: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  
+  // Typeguard für TodoItemDetail
+  export function isTodoItemDetail(item: any): item is TodoItemDetail {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "title" in item &&
+      "description" in item &&
+      "categoryName" in item &&
+      "categoryPriority" in item &&
+      "isCompleted" in item &&
+      "dueDate" in item &&
+      "createdAt" in item &&
+      "updatedAt" in item &&
+      Array.isArray(item.todoTasks) && 
+      item.todoTasks.every(isTodoTask) // Validierung der enthaltenen TodoTasks
+      // Überprüft, ob `item.todoTasks` ein Array ist und validiert jedes Element im Array, indem es `isTodoTask` aufruft.
+      // Dies stellt sicher, dass jedes `TodoTask`-Objekt im `todoTasks`-Array den richtigen Typ und die erforderlichen Eigenschaften hat.
+    ); 
+  }
+  
+  // Typeguard für TodoTask
+  export function isTodoTask(item: any): item is TodoTask {
+    return (
+      typeof item === "object" &&
+      "guid" in item &&
+      "title" in item &&
+      "isCompleted" in item &&
+      "dueDate" in item &&
+      "createdAt" in item &&
+      "updatedAt" in item
+    );
+  }
+---
+
+
+## Folder todos
+
+page.tsx
+---
+import axios from "axios";
+import https from "https";
+import TodosClient from "./TodosClient";
+import { isTodoItem } from "../types/TodoItem";
+import { isCategory } from "../types/Category";
+
+export default async function TodosPage() {
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  });
+
+  // Categories laden, um das Dropdown befüllen zu können.
+  const categoriesResponse = await axios.get("https://localhost:5443/api/Categories", { httpsAgent: agent });
+  const categories = categoriesResponse.data.filter(isCategory);
+
+  // TodoItems laden, um die Items anzeigen zu können
+  const todoItemsResponse = await axios.get("https://localhost:5443/api/TodoItems", { httpsAgent: agent });
+  const todoItems = todoItemsResponse.data.filter(isTodoItem);
+
+
+  return <TodosClient todoItems={todoItems} categories={categories} />;
+}
+---
+
+TodosClient.tsx
+---
+'use client';
+
+import { useState } from "react";
+import { TodoItem } from "../types/TodoItem";
+import { Category } from "../types/Category";
+import styles from "./style.module.css";
+import Link from "next/link";
+
+type Props = {
+    todoItems: TodoItem[];
+    categories: Category[];
+};
+
+export default function TodosClient({ todoItems, categories }: Props) {
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+    const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedCategory(event.target.value);
+    };
+
+    const filteredTodoItems = selectedCategory
+        ? todoItems.filter(item => item.categoryName === selectedCategory)
+        : todoItems;
+
+    return (
+        <div className={styles.categories}>
+            <h1>Todo Liste</h1>
+            <select onChange={handleCategoryChange}>
+                <option value="">Alle Kategorien</option>
+                {categories.map(category => (
+                    <option key={category.guid} value={category.name}>
+                        {category.name}
+                    </option>
+                ))}
+            </select> 
+
+            <ul>
+                {filteredTodoItems.map(item => (
+                    <li
+                        key={item.guid}
+                        className={
+                            new Date(item.dueDate) < new Date() ? styles.overdue : styles.onTime
+                        }
+                    >
+                        <Link href={`/todos/${item.guid}`}>{item.title}</Link>
+                        <p>{item.description}</p>
+                        <p>Kategorie: {item.categoryName}</p>
+                        <p>Fällig am: {new Date(item.dueDate).toLocaleDateString()}</p>
+                        <p>Status: {item.isCompleted ? "Abgeschlossen" : "Ausstehend"}</p>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+---
+
+## Folder todos[id]
+
+page.tsx
+---
+import axios from "axios";
+import https from "https";
+import { isTodoItemDetail } from "../../types/TodoItemDetail";
+import TodoTasksClient from "./TodoTasksClient";
+
+// `generateStaticParams` wird verwendet, um die Parameter für die dynamische Seite zu generieren
+// In diesem Fall wird eine Liste von TodoItem-GUIDs erstellt, die später für die Generierung von statischen Seiten verwendet wird.
+export async function generateStaticParams() {
+  const agent = new https.Agent({
+    rejectUnauthorized: false, // Ignoriert SSL-Zertifikatsfehler (nur für Entwicklungszwecke)
+  });
+
+  try {
+    // Holt alle TodoItems von der API
+    const response = await axios.get("https://localhost:5443/api/TodoItems", { httpsAgent: agent });
+    const todoItems = response.data;
+
+    // Extrahiert die GUIDs der TodoItems und bereitet sie für die statische Generierung vor
+    const params = todoItems.map((item: { guid: string }) => ({
+      id: item.guid, // Verwendet die GUID als `id` für das dynamische Routing
+    }));
+
+    return params; // Gibt eine Liste von Parametern zurück, die für die dynamische Seite verwendet werden
+  } catch (error) { 
+    console.error("Fehler beim Laden der TodoItems:", error);
+    return []; // Leeres Array zurückgeben, falls keine TodoItems geladen werden können
+  }
+}
+
+// `TodoItemPage` ist die Page-Komponente für jedes einzelne TodoItem, die anhand der dynamischen ID geladen wird
+export default async function TodoItemPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id: string }>; // Erwartet ein Promise mit den `id`-Parametern (die GUID des TodoItems)
+}) {
+  // Löse das Promise auf, um die `params` zu erhalten, bevor auf die ID zugegriffen wird
+  const params = await paramsPromise;
+
+  const agent = new https.Agent({
+    rejectUnauthorized: false, // Ignoriert SSL-Zertifikatsfehler (nur für Entwicklungszwecke)
+  });
+
+  try {
+    // Holt die Detailinformationen des TodoItems von der API anhand der GUID (`params.id`)
+    const response = await axios.get(
+      `https://localhost:5443/api/TodoItems/${params.id}`,
+      { httpsAgent: agent }
+    );
+
+    const todoItemDetail = response.data;
+
+    // Überprüfen, ob die erhaltenen Daten dem erwarteten `TodoItemDetail`-Typ entsprechen
+    if (isTodoItemDetail(todoItemDetail)) {
+      // Wenn die Daten validiert sind, gebe die `TodoTasksClient`-Komponente mit den TodoItem-Details weiter
+      return <TodoTasksClient todoItem={todoItemDetail} />;
+    } else {
+      // Wenn die Validierung fehlschlägt, gib eine Fehlermeldung aus
+      return <p>Ungültige Daten empfangen.</p>;
+    }
+  } catch (error) {
+    // Fehlerbehandlung: Wenn etwas beim Abrufen der TodoItem-Daten schiefgeht
+    console.error("Fehler beim Laden der Daten:", error);
+    return <p>Fehler beim Laden der Daten.</p>; // Gibt eine generische Fehlermeldung zurück
+  }
+}
+---
+
+TodoTaskClient.tsx
+---
+'use client'; // Dies weist Next.js an, diesen Code im Client (statt auf dem Server) auszuführen, was bedeutet, dass die Komponente die Client-seitige React-Logik verwendet
+
+import styles from './style.module.css'; // Importiere die CSS-Module für das Styling dieser Komponente
+import { TodoItemDetail } from '../../types/TodoItemDetail'; // Importiere den Typ für TodoItemDetails aus den Typdefinitionen
+
+// Typisierung der Props, die an die Komponente übergeben werden
+type Props = {
+  todoItem: TodoItemDetail; // Das `todoItem` ist das Objekt, das die Details zu einem TodoItem enthält, einschließlich der Tasks
+};
+
+export default function TodoTasksClient({ todoItem }: Props) {
+  return (
+    <div className={styles.tasksContainer}> 
+      {/* Die äußere Container-Div erhält eine CSS-Klasse, um die Aufgaben darzustellen */}
+      <h1>Tasks für: {todoItem.title}</h1> 
+
+      <p>{todoItem.description}</p>
+
+      <ul className={styles.tasksList}>
+        {todoItem.todoTasks.map(task => (
+          <li
+            key={task.guid} // Setze die GUID als eindeutigen Schlüssel für jedes Listenelement
+            className={ 
+              new Date(task.dueDate) < new Date() 
+                ? styles.overdue // Wenn das Fälligkeitsdatum in der Vergangenheit liegt und die Aufgabe noch nicht abgeschlossen ist, bekommt das Element die "overdue"-Stilklasse
+                : styles.onTime // Ansonsten bekommt das Element die "onTime"-Stilklasse
+            }
+          >
+            <h2>{task.title}</h2> 
+
+            <p>Status: {task.isCompleted ? 'Abgeschlossen' : 'Ausstehend'}</p>
+
+            <p>Fällig am: {new Date(task.dueDate).toLocaleDateString()}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+---

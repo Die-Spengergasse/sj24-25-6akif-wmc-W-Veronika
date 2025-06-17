@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface Topic {
-  id: number;
-  name: string;
+export type Topic = {
   guid: string;
-}
+  name: string;
+  questionCount: number;
+};
 
-export function isTopic(item: any): item is Topic {
-  return (
-    typeof item === "object" &&
-    "id" in item &&
-    "name" in item &&
-    "guid" in item
-  );
+export function isTopic(obj: any): obj is Topic {
+  return typeof obj === 'object' &&
+    typeof obj.guid === 'string' &&
+    typeof obj.name === 'string' &&
+    typeof obj.questionCount === 'number';
 }

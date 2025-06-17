@@ -1,39 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface QuestionAnswer {
-  guid: string;
-  text: string;
-}
-
-export function isQuestionAnswer(item: any): item is QuestionAnswer {
-  return (
-    typeof item === "object" &&
-    "guid" in item &&
-    "text" in item
-  );
-}
+import { Answer, isAnswer } from "./Answer";
 
 export interface Question {
   guid: string;
   number: number;
   text: string;
   points: number;
-  imageUrl: string;
+  imageUrl: string | null;
   moduleGuid: string;
   topicGuid: string;
-  answers: QuestionAnswer[];
+  answers: Answer[];
 }
 
-export function isQuestion(item: any): item is Question {
+export function isQuestion(obj: any): obj is Question {
   return (
-    typeof item === "object" &&
-    "guid" in item &&
-    "number" in item &&
-    "text" in item &&
-    "points" in item &&
-    "imageUrl" in item &&
-    "moduleGuid" in item &&
-    "topicGuid" in item &&
-    Array.isArray(item.answers) &&
-    item.answers.every(isQuestionAnswer)
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof obj.guid === "string" &&
+    typeof obj.number === "number" &&
+    typeof obj.text === "string" &&
+    typeof obj.points === "number" &&
+    (typeof obj.imageUrl === "string" || obj.imageUrl === null) &&
+    typeof obj.moduleGuid === "string" &&
+    typeof obj.topicGuid === "string" &&
+    Array.isArray(obj.answers) &&
+    obj.answers.every(isAnswer)
   );
 }

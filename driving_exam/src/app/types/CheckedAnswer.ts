@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface Answer {
+export interface CheckedAnswer {
   guid: string;
-  text: string;
+  isChecked: boolean;
 }
 
-export function isAnswer(obj: any): obj is Answer {
+export function isCheckedAnswer(obj: any): obj is CheckedAnswer {
   return (
     typeof obj === "object" &&
     obj !== null &&
     typeof obj.guid === "string" &&
-    typeof obj.text === "string"
+    typeof obj.isChecked === "boolean"
   );
 }
-

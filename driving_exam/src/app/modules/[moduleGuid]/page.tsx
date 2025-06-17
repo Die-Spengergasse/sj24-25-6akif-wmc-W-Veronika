@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import https from "https";
-import { isModule } from "../../../types/Module";
-import { isTopic } from "../../../types/Topic";
+import { isModule } from "@/app/types/Module";
+import { isTopic } from "@/app/types/Topic";
 import TopicsClient from "./TopicsClient";
 
 type Params = {
@@ -14,7 +14,7 @@ export async function generateStaticParams() {
   try {
     const res = await axios.get("https://localhost:5443/api/Modules", { httpsAgent: agent });
     const modules = res.data.filter(isModule);
-    return modules.map((m) => ({ moduleGuid: m.guid }));
+    return modules.map((m: { guid: any; }) => ({ moduleGuid: m.guid }));
   } catch {
     return [];
   }

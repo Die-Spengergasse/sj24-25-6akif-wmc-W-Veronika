@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import styles from "./style.module.css";
-import { Topic } from "../../../types/Topic";
+import { Topic } from "@/app/types/Topic";
 
 type Props = {
   topics: Topic[];

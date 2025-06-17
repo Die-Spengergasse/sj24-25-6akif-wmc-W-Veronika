@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/*  eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { Module, isModule } from "../types/Module";
 import { axiosInstance } from "../utils/apiClient";

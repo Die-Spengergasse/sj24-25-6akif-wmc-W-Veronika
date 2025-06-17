@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import https from "https";
-import { isQuestion } from "../../../../types/Question";
+import { isQuestion } from "@/app/types/Question";
 import QuestionsClient from "./QuestionsClient";
 
 type Params = {

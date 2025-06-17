@@ -4,13 +4,15 @@
     gap: 10px;
     margin: auto;
     padding: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #444;
     border-radius: 10px;
+    background: #23243a;
 }
 
 .moduleAdd > div > div:first-child {
     font-weight: bold;
     align-self: center;
+    color: #bb86fc;
 }
 
 .moduleAdd > div > div:last-child {
@@ -21,23 +23,26 @@
 .moduleAdd input[type="text"] {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid #666;
     border-radius: 5px;
+    background: #181828;
+    color: #fff;
 }
 
 .moduleAdd button {
-    background-color: #0070f3;
-    color: white;
+    background-color: #bb86fc;
+    color: #181828;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .moduleAdd button:hover {
-    background-color: #005bb5;
+    background-color: #fff;
+    color: #bb86fc;
 }
 
 .error {

@@ -5,7 +5,7 @@ import QuestionClient from "@/app/questions/QuestionClient";
 import { saveExamResult } from "../results";
 import Link from "next/link";
 
-export default function ExamClient({ questions, moduleGuid }: { questions: Question[], moduleGuid: string }) {
+export default function ExamClient({ questions, guid }: { questions: Question[], guid: string }) {
   const [current, setCurrent] = useState(0);
   const [results, setResults] = useState<{ [guid: string]: number }>({});
   const [finished, setFinished] = useState(false);
@@ -19,8 +19,8 @@ export default function ExamClient({ questions, moduleGuid }: { questions: Quest
     const pointsTotal = questions.reduce((a, q) => a + q.points, 0);
     saveExamResult({
       date: new Date().toISOString(),
-      moduleGuid,
-      moduleName: questions[0]?.moduleGuid || moduleGuid,
+      moduleGuid: guid,
+      moduleName: questions[0]?.moduleGuid || guid,
       pointsReached,
       pointsTotal,
     });

@@ -16,8 +16,8 @@ export async function addModule(formData: FormData): Promise<ErrorResponse | und
   };
   try {
     await axiosInstance.post("modules", data);
+    // revalidatePath("/modules"); // Optional: falls du Next.js Cache verwendest
   } catch (e) {
     return createErrorResponse(e);
   }
 }
-// (bereits wie categoryApiClient, kein Edit nötig)

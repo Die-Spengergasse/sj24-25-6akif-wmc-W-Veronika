@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Module, isModule } from "../types/Module";
 import { axiosInstance } from "../utils/apiClient";
+import styles from "./ExamPage.module.css";
 
 export default async function ExamModulesPage() {
   let modules: Module[] = [];
@@ -14,13 +15,15 @@ export default async function ExamModulesPage() {
   }
 
   return (
-    <div>
+    <div className={styles.examPage}>
       <h1>Prüfungssimulation</h1>
       {!error ? (
-        <ul>
+        <ul className={styles.moduleList}>
           {modules.map(m => (
             <li key={m.guid}>
-              <Link href={`/exam/${m.guid}`}>{m.name}</Link>
+              <Link href={`/exam/${m.guid}`}>
+                <span className={styles.moduleName}>{m.name}</span>
+              </Link>
             </li>
           ))}
         </ul>

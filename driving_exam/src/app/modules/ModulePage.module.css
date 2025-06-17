@@ -1,0 +1,21 @@
+.modulePage {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background: rgba(30, 30, 40, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.18);
+}
+
+.modulePage h1 {
+  color: #bb86fc;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.modulePage h2 {
+  color: #fff;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}

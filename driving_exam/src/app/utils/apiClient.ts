@@ -9,7 +9,7 @@ const agent = new https.Agent({
 
 // Erstelle eine Axios-Instanz mit Basis-URL und anderen Optionen
 export const axiosInstance = axios.create({
-    baseURL: 'https://localhost:5080/api', // Basis-URL für alle Anfragen
+    baseURL: 'http://localhost:5080/api', // Basis-URL für alle Anfragen
     timeout: 10000, // Timeout für Anfragen (optional)
     headers: {
         'Content-Type': 'application/json', // Standardheader

@@ -1,20 +1,18 @@
-
-import ModuleList from "./ModuleList";
-import { getModules } from "./moduleApiClient";
-import { isErrorResponse } from "../utils/apiClient";
+import axios from "axios";
+import https from "https";
+import { isModule } from "../types/Module";
+import ModulesClient from "./ModulesClient";
 
 export default async function ModulesPage() {
-  const response = await getModules();
+  const agent = new https.Agent({ rejectUnauthorized: false });
 
-  return (
-    <div>
-      <h1>Module</h1>
-      {!isErrorResponse(response) ? (
-        <ModuleList modules={response} />
-      ) : (
-        <div className="errorbox">{response.message}</div>
-      )}
-    </div>
-  );
+  try {
+    const response = await axios.get("https://localhost:5443/api/Modules", { httpsAgent: agent });
+    const modules = response.data.filter(isModule);
+
+    return <ModulesClient modules={modules} />;
+  } catch (error) {
+    console.error("Fehler beim Laden der Module:", error);
+    return <p>Fehler beim Laden der Module.</p>;
+  }
 }
-

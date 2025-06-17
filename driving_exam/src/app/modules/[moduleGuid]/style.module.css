@@ -1,0 +1,35 @@
+.topicsContainer ul {
+  list-style: none;
+  padding: 0;
+  max-width: 700px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.topicsContainer li {
+  background: #23243a;
+  padding: 18px 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.topicsContainer li:hover {
+  background: #2d2e4a;
+}
+
+.topicName {
+  font-weight: 600;
+  color: #bb86fc;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+}
+
+.topicsContainer li:hover .topicName {
+  color: white;
+  text-shadow: 0 0 8px #bb86fc;
+}

@@ -14,14 +14,14 @@ export async function generateStaticParams() {
   try {
     const res = await axios.get("https://localhost:5443/api/Modules", { httpsAgent: agent });
     const modules = res.data.filter(isModule);
-    return modules.map((m: { guid: any; }) => ({ moduleGuid: m.guid }));
+    return modules.map((m: { guid: string }) => ({ moduleGuid: m.guid }));
   } catch {
     return [];
   }
 }
 
-export default async function ModuleTopicsPage({ params }: { params: Params }) {
-  const { moduleGuid } = params;
+export default async function ModuleTopicsPage({ params }: { params: Promise<Params> }) {
+  const { moduleGuid } = await params;
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   try {

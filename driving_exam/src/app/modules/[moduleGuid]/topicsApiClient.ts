@@ -1,8 +1,8 @@
 "use server";
 
 import { ErrorResponse, axiosInstance, createErrorResponse } from "@/app/utils/apiClient";
-import { Topic, isTopic } from "@/app/types/Topic";
 import { revalidatePath } from "next/cache";
+import { Topic, isTopic } from "@/app/types/Topic";
 
 export async function getTopics(): Promise<Topic[] | ErrorResponse> {
   try {
@@ -20,7 +20,7 @@ export async function addTopic(formData: FormData): Promise<ErrorResponse | unde
 
   try {
     await axiosInstance.post("topics", data);
-    revalidatePath("/topics");
+    revalidatePath("/topics"); // oder der Pfad, wo die Liste ist
   } catch (e) {
     return createErrorResponse(e);
   }

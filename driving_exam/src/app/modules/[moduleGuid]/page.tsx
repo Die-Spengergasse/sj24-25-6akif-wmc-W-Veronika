@@ -1,38 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import https from "https";
-import { isModule } from "@/app/types/Module";
 import { isTopic } from "@/app/types/Topic";
 import TopicsClient from "./TopicsClient";
+import TopicsAdd from "./TopicsAdd";
 
-type Params = {
+interface Params {
   moduleGuid: string;
-};
-
-export async function generateStaticParams() {
-  const agent = new https.Agent({ rejectUnauthorized: false });
-  try {
-    const res = await axios.get("https://localhost:5443/api/Modules", { httpsAgent: agent });
-    const modules = res.data.filter(isModule);
-    return modules.map((m: { guid: string }) => ({ moduleGuid: m.guid }));
-  } catch {
-    return [];
-  }
 }
 
-export default async function ModuleTopicsPage({ params }: { params: Promise<Params> }) {
+export default async function ModuleTopicsPage({ params }: { params: Params }) {
   const { moduleGuid } = await params;
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   try {
     const res = await axios.get(
-      `https://localhost:5443/api/Topics?assignedModule=${moduleGuid}`,
+      `http://localhost:5080/api/Topics?assignedModule=${moduleGuid}`,
       { httpsAgent: agent }
     );
 
-    const topics = (res.data as any[]).filter(isTopic);
+    const topics = res.data.filter(isTopic);
 
-    return <TopicsClient topics={topics} moduleGuid={moduleGuid} />;
+    return (
+      <div>
+        <h1>Themen zum Modul</h1>
+        <TopicsClient topics={topics} moduleGuid={moduleGuid} />
+        <h2>Neues Thema hinzufügen</h2>
+        <TopicsAdd />
+      </div>
+    );
   } catch (error) {
     console.error("Fehler beim Laden der Topics:", error);
     return <p>Fehler beim Laden der Topics.</p>;

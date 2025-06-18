@@ -13,7 +13,7 @@ export async function generateStaticParams() {
   const agent = new https.Agent({ rejectUnauthorized: false });
   try {
     // Hole alle Module
-    const modulesRes = await axios.get("https://localhost:5443/api/Modules", { httpsAgent: agent });
+    const modulesRes = await axios.get("http://localhost:5080/api/Modules", { httpsAgent: agent });
     const modules = modulesRes.data;
 
     const params: { moduleGuid: string; topicGuid: string }[] = [];
@@ -21,7 +21,7 @@ export async function generateStaticParams() {
     for (const mod of modules) {
       // Hole Topics pro Modul
       const topicsRes = await axios.get(
-        `https://localhost:5443/api/Topics?assignedModule=${mod.guid}`,
+        `http://localhost:5080/api/Topics?assignedModule=${mod.guid}`,
         { httpsAgent: agent }
       );
       const topics = topicsRes.data;
@@ -42,7 +42,7 @@ export default async function QuestionsPage({ params }: { params: Promise<Params
 
   try {
     const res = await axios.get(
-      `https://localhost:5443/api/Questions?moduleGuid=${moduleGuid}&topicGuid=${topicGuid}`,
+      `http://localhost:5080/api/Questions?moduleGuid=${moduleGuid}&topicGuid=${topicGuid}`,
       { httpsAgent: agent }
     );
 

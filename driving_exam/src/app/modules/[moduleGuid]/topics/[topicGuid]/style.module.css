@@ -97,3 +97,28 @@
 .actionButton:hover:not(:disabled) {
   background-color: #283593;
 }
+
+.progressWrapper {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.progressText {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.progressBar {
+  height: 10px;
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #0070f3;
+  transition: width 0.4s ease;
+}

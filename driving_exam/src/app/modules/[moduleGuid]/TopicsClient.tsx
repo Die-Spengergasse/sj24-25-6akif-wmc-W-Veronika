@@ -12,7 +12,6 @@ type Props = {
 export default function TopicsClient({ topics, moduleGuid }: Props) {
   return (
     <div className={styles.topicsContainer}>
-      <h1>Themen zum Modul</h1>
       <ul>
         {topics.map((topic) => (
           <li key={topic.guid}>

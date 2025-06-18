@@ -1,6 +1,6 @@
 'use client';
 
-import { Module } from "../types/Module";
+import { Module } from "@/app/types/Module";
 import Link from "next/link";
 import styles from "./style.module.css";
 
@@ -14,10 +14,8 @@ export default function ModulesClient({ modules }: Props) {
       <ul>
         {modules.map((mod) => (
           <li key={mod.guid}>
-            <Link href={`/modules/${mod.guid}`}>
-              <a className={styles.moduleName}>
-                {mod.number}. {mod.name}
-              </a>
+            <Link href={`/modules/${mod.guid}`} className={styles.moduleName}>
+              {mod.number}. {mod.name}
             </Link>
           </li>
         ))}

@@ -16,10 +16,11 @@ export default function TopicsClient({ topics, moduleGuid }: Props) {
       <ul>
         {topics.map((topic) => (
           <li key={topic.guid}>
-            <Link href={`/modules/${moduleGuid}/topics/${topic.guid}`}>
-              <a className={styles.topicName}>
-                {topic.name} ({topic.questionCount} Fragen)
-              </a>
+            <Link
+              href={`/modules/${moduleGuid}/topics/${topic.guid}`}
+              className={styles.topicName}
+            >
+              {topic.name} ({topic.questionCount} Fragen)
             </Link>
           </li>
         ))}

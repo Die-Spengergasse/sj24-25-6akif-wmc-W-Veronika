@@ -36,8 +36,8 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function QuestionsPage({ params }: { params: Params }) {
-  const { moduleGuid, topicGuid } = params;
+export default async function QuestionsPage({ params }: { params: Promise<Params> }) {
+  const { moduleGuid, topicGuid } = await params;
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   try {

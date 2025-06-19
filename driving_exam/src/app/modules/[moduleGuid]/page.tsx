@@ -9,7 +9,7 @@ interface Params {
 }
 
 export default async function ModuleTopicsPage({ params }: { params: Params }) {
-  const { moduleGuid } = await params;
+  const { moduleGuid } = params;
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   try {
@@ -25,7 +25,7 @@ export default async function ModuleTopicsPage({ params }: { params: Params }) {
         <h1>Themen zum Modul</h1>
         <TopicsClient topics={topics} moduleGuid={moduleGuid} />
         <h2>Neues Thema hinzufügen</h2>
-        <TopicsAdd />
+        <TopicsAdd moduleGuid={moduleGuid} />
       </div>
     );
   } catch (error) {

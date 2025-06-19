@@ -4,23 +4,28 @@ import { ErrorResponse, axiosInstance, createErrorResponse } from "@/app/utils/a
 import { revalidatePath } from "next/cache";
 import { Topic, isTopic } from "@/app/types/Topic";
 
-export async function getTopics(): Promise<Topic[] | ErrorResponse> {
+export async function getTopics(assignedModule?: string): Promise<Topic[] | ErrorResponse> {
   try {
-    const response = await axiosInstance.get("topics");
+    const url = assignedModule ? `topics?assignedModule=${assignedModule}` : "topics";
+    const response = await axiosInstance.get(url);
     return response.data.filter(isTopic);
   } catch (e) {
     return createErrorResponse(e);
   }
 }
 
-export async function addTopic(formData: FormData): Promise<ErrorResponse | undefined> {
-  const data = {
-    name: formData.get("name"),
-  };
-
+/**
+ * Neuer addTopic-Aufruf mit zwei Parametern:
+ *  - name: der Name des neuen Themas
+ *  - moduleGuid: zur Revalidierung der passenden Seite (nicht an API gesendet!)
+ */
+export async function addTopic(name: string, moduleGuid: string): Promise<ErrorResponse | undefined> {
   try {
-    await axiosInstance.post("topics", data);
-    revalidatePath("/topics"); // oder der Pfad, wo die Liste ist
+    // Nur "name" wird an API gesendet
+    await axiosInstance.post("topics", { name });
+
+    // Revalidiere den Pfad, der die Topics für dieses Modul zeigt
+    revalidatePath(`/modules/${moduleGuid}/topics`);
   } catch (e) {
     return createErrorResponse(e);
   }

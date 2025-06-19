@@ -1,6 +1,6 @@
 import axios from "axios";
 import https from "https";
-import { isModule } from "../types/Module";
+import { isModule } from "@/app/types/Module";
 import ModulesClient from "./ModulesClient";
 import ModulesAdd from "./ModulesAdd";
 

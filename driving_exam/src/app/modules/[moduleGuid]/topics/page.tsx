@@ -8,6 +8,7 @@ import TopicsAdd from "../TopicsAdd"; // bereits existierend
 export default async function TopicsPage({ params }: { params: { moduleGuid: string } }) {
   const agent = new https.Agent({ rejectUnauthorized: false });
 
+  // http://localhost:5080/api/Topics?assignedModule=${params.moduleGuid}
   const res = await axios.get(
     `http://localhost:5080/api/Topics?assignedModule=${params.moduleGuid}`,
     { httpsAgent: agent }
@@ -17,7 +18,7 @@ export default async function TopicsPage({ params }: { params: { moduleGuid: str
   return (
     <div>
       <TopicsClient topics={topics} moduleGuid={params.moduleGuid} />
-      <TopicsAdd />
+      <TopicsAdd /> 
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface Params {
 }
 
 export default async function ModuleTopicsPage({ params }: { params: Params }) {
-  const { moduleGuid } = params;
+  const { moduleGuid } = await params;
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   try {

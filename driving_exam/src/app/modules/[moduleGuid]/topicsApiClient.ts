@@ -25,6 +25,7 @@ export async function addTopic(name: string, moduleGuid: string): Promise<ErrorR
     await axiosInstance.post("topics", { name });
 
     // Revalidiere den Pfad, der die Topics für dieses Modul zeigt
+    revalidatePath(`topics`);
     revalidatePath(`/modules/${moduleGuid}/topics`);
   } catch (e) {
     return createErrorResponse(e);

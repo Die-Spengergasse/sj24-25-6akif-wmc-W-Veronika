@@ -111,5 +111,57 @@ namespace DrivingExamBackend.Controllers
                 Answers = answers.Select(a => a.Guid).ToList()
             });
         }
+
+        [HttpGet("exam/{moduleGuid}")]
+[ProducesResponseType<List<QuestionDto>>(StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+public async Task<ActionResult<List<QuestionDto>>> GetExamQuestions([FromRoute] Guid moduleGuid, [FromQuery] int count = 20)
+{
+    try
+    {
+        if (count <= 0) count = 20;
+        if (count > 20) count = 20;  // genau 20 oder weniger
+        
+        var questionsQuery = _db.Questions
+            .Include(q => q.Answers)
+            .Where(q => q.Module.Guid == moduleGuid);
+
+        var totalCount = await questionsQuery.CountAsync();
+
+        if (totalCount == 0)
+            return Ok(new List<QuestionDto>());  // keine Fragen vorhanden
+
+        // Falls es weniger als 'count' Fragen gibt, nur so viele nehmen
+        var takeCount = Math.Min(count, totalCount);
+
+        // Zufällige Fragen per OrderBy NEWID() (SQL Server)
+       var questions = await _db.Questions
+    .Where(q => q.Module.Guid == moduleGuid)
+    .Include(q => q.Answers)
+    .OrderBy(q => Guid.NewGuid())   // Random order for SQL Server
+    .Take(count)
+    .Select(q => new QuestionDto(
+        q.Guid,
+        q.Number,
+        q.Text,
+        q.Points,
+        q.ImageUrl,
+        q.Module.Guid,
+        q.Topic.Guid,
+        q.Answers.Select(a => new AnswerDto(a.Guid, a.Text)).ToList()
+    ))
+    .ToListAsync();
+
+return Ok(questions);
+
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Fehler in GetExamQuestions: {ex}");
+        return StatusCode(500, "Interner Serverfehler beim Laden der Prüfungsfragen.");
+    }
+}
+
+
     }
 }

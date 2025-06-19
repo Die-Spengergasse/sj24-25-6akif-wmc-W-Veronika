@@ -18,7 +18,7 @@ export default async function TopicsPage({ params }: { params: { moduleGuid: str
   return (
     <div>
       <TopicsClient topics={topics} moduleGuid={params.moduleGuid} />
-      <TopicsAdd /> 
+      <TopicsAdd moduleGuid={params.moduleGuid}/> 
     </div>
   );
 }

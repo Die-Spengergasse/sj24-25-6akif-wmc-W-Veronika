@@ -1,71 +1,159 @@
-/* "use client";
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Question } from "@/app/types/Question";
-// Update the import path below if the actual location is different
-import QuestionClient from "@/app/modules/[moduleGuid]/topics/[topicGuid]/QuestionsClient";
-import { saveExamResult } from "../results";
-import Link from "next/link";
+import { CheckAnswersResponse } from "@/app/types/CheckedAnswer";
+import ModalDialog from "@/app/components/ModalDialog";
+import styles from "./style.module.css";
 
-export default function ExamClient({ questions, guid }: { questions: Question[], guid: string }) {
-  const [current, setCurrent] = useState(0);
-  const [results, setResults] = useState<{ [guid: string]: number }>({});
-  const [finished, setFinished] = useState(false);
+type Props = {
+  questions: Question[];
+};
 
-  const handleResult = (points: number) => {
-    setResults(r => ({ ...r, [questions[current].guid]: points }));
-  };
+export default function ExamClient({ questions }: Props) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, boolean>>({});
+  const [totalPointsReached, setTotalPointsReached] = useState(0);
+  const [totalPointsReachable, setTotalPointsReachable] = useState(0);
+  const [showResultDialog, setShowResultDialog] = useState(false);
 
-  const handleFinish = () => {
-    const pointsReached = Object.values(results).reduce((a, b) => a + b, 0);
-    const pointsTotal = questions.reduce((a, q) => a + q.points, 0);
-    saveExamResult({
-      date: new Date().toISOString(),
-      moduleGuid: guid,
-      moduleName: questions[0]?.moduleGuid || guid,
-      pointsReached,
-      pointsTotal,
-    });
-    setFinished(true);
-  };
+  const router = useRouter();
+  const currentQuestion = questions[currentIndex];
+
+  function toggleAnswer(guid: string) {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [guid]: !prev[guid],
+    }));
+  }
+
+  async function handleNextQuestion() {
+    const checkedAnswers = currentQuestion.answers.map((a) => ({
+      guid: a.guid,
+      isChecked: !!selectedAnswers[a.guid],
+    }));
+
+    try {
+      const res = await fetch(
+        `http://localhost:5080/api/Questions/${currentQuestion.guid}/checkanswers`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkedAnswers }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Fehler beim Prüfen");
+
+      const data: CheckAnswersResponse = await res.json();
+
+      setTotalPointsReached((prev) => prev + data.pointsReached);
+      setTotalPointsReachable((prev) => prev + data.pointsReachable);
+    } catch (err) {
+      console.error("Fehler beim Prüfen der Antworten", err);
+      alert("Fehler bei der Überprüfung. Bitte später erneut versuchen.");
+      return;
+    }
+
+    if (currentIndex < questions.length - 1) {
+      setSelectedAnswers({});
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      setShowResultDialog(true);
+    }
+  }
+
+  function handleDialogOk() {
+    router.push("/modules");
+  }
+
+  function handleDialogCancel() {
+    setShowResultDialog(false);
+  }
+
+  const resultPercentage =
+    totalPointsReachable > 0
+      ? (totalPointsReached / totalPointsReachable) * 100
+      : 0;
 
   return (
-    <div>
-      <QuestionClient
-      questions={[questions[current]]}
-      onResult={handleResult}
-      />
-      <div style={{ marginTop: 16 }}>
-      <button
-        onClick={() => setCurrent(c => Math.max(0, c - 1))}
-        disabled={current === 0}
-      >
-        Zurück
-      </button>
-      <button
-        onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
-        disabled={current === questions.length - 1}
-        style={{ marginLeft: 8 }}
-      >
-        Nächste Frage
-      </button>
+    <div className={styles.questionsContainer}>
+      {/* Fortschritt */}
+      <div className={styles.progressWrapper}>
+        <p className={styles.progressText}>
+          Frage {currentIndex + 1} von {questions.length}
+        </p>
+        <div className={styles.progressBar}>
+          <div
+            className={styles.progressFill}
+            style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+          />
+        </div>
       </div>
-      <div style={{ marginTop: 8 }}>
-      Frage {current + 1} von {questions.length}
+
+      {/* Fragenkarte */}
+      <div className={styles.questionCard}>
+        <h2>
+          Frage {currentQuestion.number}: {currentQuestion.text}
+        </h2>
+
+        {currentQuestion.imageUrl && (
+          <img
+            src={currentQuestion.imageUrl}
+            alt="Fragebild"
+            className={styles.questionImage}
+          />
+        )}
+
+        <ul className={styles.answersList}>
+          {currentQuestion.answers.map((answer) => {
+            const isChecked = !!selectedAnswers[answer.guid];
+            return (
+              <li key={answer.guid} className={styles.answerItem}>
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => toggleAnswer(answer.guid)}
+                  className={styles.checkbox}
+                />
+                <span>{answer.text}</span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <button
+          className={styles.actionButton}
+          onClick={handleNextQuestion}
+          disabled={!Object.values(selectedAnswers).some(Boolean)}
+        >
+          Nächste Frage
+        </button>
       </div>
-      <div style={{ marginTop: 16 }}>
-      <b>Punkte erreicht:</b> {Object.values(results).reduce((a, b) => a + b, 0)} / {questions.reduce((a, q) => a + q.points, 0)}
-      </div>
-      {!finished && current === questions.length - 1 && (
-      <button onClick={handleFinish} style={{ marginTop: 16 }}>
-        Prüfung abschließen und speichern
-      </button>
-      )}
-      {finished && (
-      <div>
-        Prüfung gespeichert! <Link href="/exam/meinepruefungen">Zu meinen Prüfungen</Link>
-      </div>
+
+      {showResultDialog && (
+        <ModalDialog
+          title="Ergebnis"
+          onOk={handleDialogOk}
+          onCancel={handleDialogCancel}
+        >
+          {resultPercentage >= 80 ? (
+            <p>
+              Glückwunsch. Diese Prüfung hättest du bestanden. Du hast insgesamt{" "}
+              <strong>{totalPointsReached}</strong> von{" "}
+              <strong>{totalPointsReachable}</strong> Punkten erreicht.
+            </p>
+          ) : (
+            <p>
+              Diese Fragen solltest du dir vielleicht nochmal anschauen. Viel Spaß beim Lernen!<br />
+              Du hast insgesamt <strong>{totalPointsReached}</strong> von{" "}
+              <strong>{totalPointsReachable}</strong> Punkten erreicht.
+            </p>
+          )}
+        </ModalDialog>
       )}
     </div>
   );
 }
- */

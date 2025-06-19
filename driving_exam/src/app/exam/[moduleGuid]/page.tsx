@@ -1,25 +1,33 @@
-/* 
-import { axiosInstance } from "@/app/utils/apiClient";
-import { Question, isQuestion } from "@/app/types/Question";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from "axios";
+import https from "https";
+import { isQuestion } from "@/app/types/Question";
 import ExamClient from "./ExamClient";
 
-export default async function ExamPage({ params }: { params: { guid: string } }) {
-  let questions: Question[] = [];
-  let error: string | null = null;
+type Params = {
+  moduleGuid: string;
+};
+
+export default async function ExamPage({ params }: { params: Params }) {
+  const { moduleGuid } = await params;
+  const agent = new https.Agent({ rejectUnauthorized: false });
+
   try {
-    // params.guid ist synchron verfügbar!
-    const response = await axiosInstance.get(`exam/${params.guid}?count=20`);
-    questions = response.data.filter(isQuestion);
-  } catch (e: any) {
-    error = e?.message ?? "Fehler beim Laden der Prüfungsfragen";
+    // Alle Fragen zu einem Modul, über alle Topics
+    const res = await axios.get(
+      `http://localhost:5080/api/questions/exam/${moduleGuid}?count=20`,
+      { httpsAgent: agent }
+    );
+
+    const questions = (res.data as any[]).filter(isQuestion);
+
+    if (!questions.length) {
+      return <p>Keine Prüfungsfragen für dieses Modul vorhanden.</p>;
+    }
+
+    return <ExamClient questions={questions} />;
+  } catch (error) {
+    console.error("Fehler beim Laden der Prüfungsfragen:", error);
+    return <p>Fehler beim Laden der Prüfungsfragen.</p>;
   }
-
-  if (error) {
-    return <div className="errorbox">{error}</div>;
-  }
-
-  if (questions.length === 0) return <div>Lade Fragen...</div>;
-
-  return <ExamClient questions={questions} guid={params.guid} />;
 }
- */

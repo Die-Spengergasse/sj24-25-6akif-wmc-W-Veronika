@@ -1,7 +1,7 @@
 /*  eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { Module, isModule } from "../types/Module";
-import { axiosInstance } from "../utils/apiClient";
+import { axiosInstance } from "@/app/utils/apiClient";
 import styles from "./ExamPage.module.css";
 
 export default async function ExamModulesPage() {

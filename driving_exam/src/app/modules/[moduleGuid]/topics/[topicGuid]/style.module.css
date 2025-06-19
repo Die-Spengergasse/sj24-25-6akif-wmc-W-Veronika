@@ -1,0 +1,124 @@
+.questionsContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.questionCard {
+  background: #23243a;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.questionCard h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.questionImage {
+  max-width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+}
+
+.answers {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+
+.answersList {
+  list-style-type: disc;
+  padding-left: 1.2rem;
+  color: #ccc;
+}
+
+.answerItem {
+  background-color: #353659;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.25s ease;
+}
+
+.answerItem:hover {
+  background-color: #4a4c7a;
+}
+
+.answerItem input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.correctAnswer {
+  background-color: #2e7d32 !important; /* Grün */
+  color: white;
+}
+
+.wrongAnswer {
+  background-color: #c62828 !important; /* Rot */
+  color: white;
+}
+
+.checkbox {
+  flex-shrink: 0;
+}
+
+.actionButton {
+  background-color: #3949ab;
+  color: white;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  user-select: none;
+}
+
+.actionButton:disabled {
+  background-color: #9fa8da;
+  cursor: not-allowed;
+}
+
+.actionButton:hover:not(:disabled) {
+  background-color: #283593;
+}
+
+.progressWrapper {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.progressText {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.progressBar {
+  height: 10px;
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #0070f3;
+  transition: width 0.4s ease;
+}

@@ -6,13 +6,16 @@ import { useRouter } from "next/navigation";
 import { Question } from "@/app/types/Question";
 import { CheckAnswersResponse } from "@/app/types/CheckedAnswer";
 import ModalDialog from "@/app/components/ModalDialog";
+import { saveExamResult } from "../results";
 import styles from "./style.module.css";
 
 type Props = {
   questions: Question[];
+  moduleGuid: string;
+  moduleName: string;
 };
 
-export default function ExamClient({ questions }: Props) {
+export default function ExamClient({ questions, moduleGuid, moduleName }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, boolean>>({});
   const [totalPointsReached, setTotalPointsReached] = useState(0);
@@ -21,66 +24,67 @@ export default function ExamClient({ questions }: Props) {
 
   const router = useRouter();
   const currentQuestion = questions[currentIndex];
+  const isLastQuestion = currentIndex === questions.length - 1;
 
-  function toggleAnswer(guid: string) {
+  const toggleAnswer = (guid: string) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [guid]: !prev[guid],
     }));
-  }
+  };
 
-  async function handleNextQuestion() {
-    const checkedAnswers = currentQuestion.answers.map((a) => ({
-      guid: a.guid,
-      isChecked: !!selectedAnswers[a.guid],
-    }));
-
+  const handleNextQuestion = async () => {
     try {
       const res = await fetch(
         `http://localhost:5080/api/Questions/${currentQuestion.guid}/checkanswers`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checkedAnswers }),
+          body: JSON.stringify({
+            checkedAnswers: currentQuestion.answers.map((a) => ({
+              guid: a.guid,
+              isChecked: !!selectedAnswers[a.guid],
+            })),
+          }),
         }
       );
 
-      if (!res.ok) throw new Error("Fehler beim Prüfen");
+      if (!res.ok) throw new Error("Antwortprüfung fehlgeschlagen");
 
       const data: CheckAnswersResponse = await res.json();
+      const reached = totalPointsReached + data.pointsReached;
+      const total = totalPointsReachable + data.pointsReachable;
 
-      setTotalPointsReached((prev) => prev + data.pointsReached);
-      setTotalPointsReachable((prev) => prev + data.pointsReachable);
-    } catch (err) {
-      console.error("Fehler beim Prüfen der Antworten", err);
+      setTotalPointsReached(reached);
+      setTotalPointsReachable(total);
+
+      if (currentIndex < questions.length - 1) {
+        setSelectedAnswers({});
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        saveExamResult({
+          date: new Date().toISOString(),
+          moduleGuid,
+          moduleName,
+          pointsReached: reached,
+          pointsTotal: total,
+        });
+
+        setShowResultDialog(true);
+      }
+    } catch (error) {
+      console.error("Fehler beim Prüfen der Antworten:", error);
       alert("Fehler bei der Überprüfung. Bitte später erneut versuchen.");
-      return;
     }
+  };
 
-    if (currentIndex < questions.length - 1) {
-      setSelectedAnswers({});
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setShowResultDialog(true);
-    }
-  }
-
-  function handleDialogOk() {
-    router.push("/modules");
-  }
-
-  function handleDialogCancel() {
-    setShowResultDialog(false);
-  }
+  const handleDialogOk = () => router.push("/modules");
 
   const resultPercentage =
-    totalPointsReachable > 0
-      ? (totalPointsReached / totalPointsReachable) * 100
-      : 0;
+    totalPointsReachable > 0 ? (totalPointsReached / totalPointsReachable) * 100 : 0;
 
   return (
     <div className={styles.questionsContainer}>
-      {/* Fortschritt */}
       <div className={styles.progressWrapper}>
         <p className={styles.progressText}>
           Frage {currentIndex + 1} von {questions.length}
@@ -93,7 +97,6 @@ export default function ExamClient({ questions }: Props) {
         </div>
       </div>
 
-      {/* Fragenkarte */}
       <div className={styles.questionCard}>
         <h2>
           Frage {currentQuestion.number}: {currentQuestion.text}
@@ -108,20 +111,17 @@ export default function ExamClient({ questions }: Props) {
         )}
 
         <ul className={styles.answersList}>
-          {currentQuestion.answers.map((answer) => {
-            const isChecked = !!selectedAnswers[answer.guid];
-            return (
-              <li key={answer.guid} className={styles.answerItem}>
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => toggleAnswer(answer.guid)}
-                  className={styles.checkbox}
-                />
-                <span>{answer.text}</span>
-              </li>
-            );
-          })}
+          {currentQuestion.answers.map((answer) => (
+            <li key={answer.guid} className={styles.answerItem}>
+              <input
+                type="checkbox"
+                checked={!!selectedAnswers[answer.guid]}
+                onChange={() => toggleAnswer(answer.guid)}
+                className={styles.checkbox}
+              />
+              <span>{answer.text}</span>
+            </li>
+          ))}
         </ul>
 
         <button
@@ -129,27 +129,25 @@ export default function ExamClient({ questions }: Props) {
           onClick={handleNextQuestion}
           disabled={!Object.values(selectedAnswers).some(Boolean)}
         >
-          Nächste Frage
+          {isLastQuestion ? "Abschließen" : "Nächste Frage"}
         </button>
+
       </div>
 
       {showResultDialog && (
-        <ModalDialog
-          title="Ergebnis"
-          onOk={handleDialogOk}
-          onCancel={handleDialogCancel}
-        >
+        <ModalDialog title="Ergebnis" onOk={handleDialogOk} onCancel={() => setShowResultDialog(false)}>
           {resultPercentage >= 80 ? (
             <p>
-              Glückwunsch. Diese Prüfung hättest du bestanden. Du hast insgesamt{" "}
+              Glückwunsch! Du hast die Prüfung bestanden mit{" "}
               <strong>{totalPointsReached}</strong> von{" "}
-              <strong>{totalPointsReachable}</strong> Punkten erreicht.
+              <strong>{totalPointsReachable}</strong> Punkten (
+              {resultPercentage.toFixed(1)}%).
             </p>
           ) : (
             <p>
-              Diese Fragen solltest du dir vielleicht nochmal anschauen. Viel Spaß beim Lernen!<br />
-              Du hast insgesamt <strong>{totalPointsReached}</strong> von{" "}
-              <strong>{totalPointsReachable}</strong> Punkten erreicht.
+              Leider nicht bestanden. Du hast <strong>{totalPointsReached}</strong> von{" "}
+              <strong>{totalPointsReachable}</strong> Punkten erreicht (
+              {resultPercentage.toFixed(1)}%). Weiter üben!
             </p>
           )}
         </ModalDialog>

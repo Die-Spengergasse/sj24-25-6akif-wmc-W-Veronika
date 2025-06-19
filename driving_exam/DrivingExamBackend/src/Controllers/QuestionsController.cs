@@ -112,55 +112,45 @@ namespace DrivingExamBackend.Controllers
             });
         }
 
+
         [HttpGet("exam/{moduleGuid}")]
-[ProducesResponseType<List<QuestionDto>>(StatusCodes.Status200OK)]
-[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-public async Task<ActionResult<List<QuestionDto>>> GetExamQuestions([FromRoute] Guid moduleGuid, [FromQuery] int count = 20)
-{
-    try
-    {
-        if (count <= 0) count = 20;
-        if (count > 20) count = 20;  // genau 20 oder weniger
-        
-        var questionsQuery = _db.Questions
-            .Include(q => q.Answers)
-            .Where(q => q.Module.Guid == moduleGuid);
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<QuestionDto>>> GetExamQuestions([FromRoute] Guid moduleGuid, [FromQuery] int count = 20)
+        {
+            try
+            {
+                if (count <= 0)
+                    return Problem("Parameter 'count' muss größer als 0 sein.", statusCode: 400);
 
-        var totalCount = await questionsQuery.CountAsync();
+                var questions = await _db.Questions
+                    .Where(q => q.Module.Guid == moduleGuid)
+                    .Select(q => new QuestionDto(
+                        q.Guid, q.Number, q.Text, q.Points, q.ImageUrl, q.Module.Guid, q.Topic.Guid,
+                        q.Answers.Select(a => new AnswerDto(a.Guid, a.Text)).ToList()
+                    ))
+                    .ToListAsync();
 
-        if (totalCount == 0)
-            return Ok(new List<QuestionDto>());  // keine Fragen vorhanden
+                if (questions == null || !questions.Any())
+                    return Problem($"Keine Fragen für Modul mit Guid '{moduleGuid}' gefunden.", statusCode: 404);
 
-        // Falls es weniger als 'count' Fragen gibt, nur so viele nehmen
-        var takeCount = Math.Min(count, totalCount);
+                var random = new Random();
+                var randomized = questions.OrderBy(q => random.Next()).Take(count).ToList();
 
-        // Zufällige Fragen per OrderBy NEWID() (SQL Server)
-       var questions = await _db.Questions
-    .Where(q => q.Module.Guid == moduleGuid)
-    .Include(q => q.Answers)
-    .OrderBy(q => Guid.NewGuid())   // Random order for SQL Server
-    .Take(count)
-    .Select(q => new QuestionDto(
-        q.Guid,
-        q.Number,
-        q.Text,
-        q.Points,
-        q.ImageUrl,
-        q.Module.Guid,
-        q.Topic.Guid,
-        q.Answers.Select(a => new AnswerDto(a.Guid, a.Text)).ToList()
-    ))
-    .ToListAsync();
+                return Ok(randomized);
+            }
+            catch (DbUpdateException e)
+            {
+                return Problem(e.InnerException?.Message ?? e.Message, statusCode: 400);
+            }
+            catch (Exception)
+            {
+                return Problem("Interner Serverfehler beim Laden der Prüfungsfragen.", statusCode: 500);
+            }
+        }
 
-return Ok(questions);
-
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"Fehler in GetExamQuestions: {ex}");
-        return StatusCode(500, "Interner Serverfehler beim Laden der Prüfungsfragen.");
-    }
-}
 
 
     }

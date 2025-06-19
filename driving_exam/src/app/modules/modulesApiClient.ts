@@ -5,13 +5,13 @@ import { Module, isModule } from "@/app/types/Module";
 import { revalidatePath } from "next/cache";
 
 export async function getModules(): Promise<Module[] | ErrorResponse> {
-    try {
-        const modulesResponse = await axiosInstance.get("modules");
-        return modulesResponse.data.filter(isModule);
-    }
-    catch (e) {
-        return createErrorResponse(e);
-    }
+  try {
+    const modulesResponse = await axiosInstance.get("modules");
+    return modulesResponse.data.filter(isModule);
+  }
+  catch (e) {
+    return createErrorResponse(e);
+  }
 }
 
 export async function addModule(formData: FormData): Promise<ErrorResponse | undefined> {

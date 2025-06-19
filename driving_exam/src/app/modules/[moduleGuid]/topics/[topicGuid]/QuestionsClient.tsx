@@ -26,6 +26,7 @@ export default function QuestionsClient({ questions }: Props) {
   const router = useRouter();
 
   const currentQuestion = questions[currentIndex];
+  const isLastQuestion = currentIndex === questions.length - 1;
 
   function toggleAnswer(guid: string) {
     if (checkResult) return;
@@ -38,45 +39,45 @@ export default function QuestionsClient({ questions }: Props) {
   async function handleCheckAnswers() {
     console.log("handleCheckAnswers wird aufgerufen");
 
-  setLoading(true);
-  try {
-    const checkedAnswers = currentQuestion.answers.map((a) => ({
-      guid: a.guid,
-      isChecked: !!selectedAnswers[a.guid],
-    }));
+    setLoading(true);
+    try {
+      const checkedAnswers = currentQuestion.answers.map((a) => ({
+        guid: a.guid,
+        isChecked: !!selectedAnswers[a.guid],
+      }));
 
-    console.log("Sende POST an /checkanswers mit Daten:", checkedAnswers);
+      console.log("Sende POST an /checkanswers mit Daten:", checkedAnswers);
 
-    const res = await fetch(
-      `http://localhost:5080/api/Questions/${currentQuestion.guid}/checkanswers`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checkedAnswers }),
+      const res = await fetch(
+        `http://localhost:5080/api/Questions/${currentQuestion.guid}/checkanswers`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkedAnswers }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Fehler bei der Antwortprüfung");
       }
-    );
 
-    if (!res.ok) {
-      throw new Error("Fehler bei der Antwortprüfung");
+      const data: CheckAnswersResponse = await res.json();
+
+      console.log("Antwort von Server:", data);
+
+      setCheckResult(data.checkResult);
+      setPointsReached(data.pointsReached);
+      setPointsReachable(data.pointsReachable);
+
+      setTotalPointsReached((prev) => prev + data.pointsReached);
+      setTotalPointsReachable((prev) => prev + data.pointsReachable);
+    } catch (error) {
+      console.error("Fehler beim POST:", error);
+      alert("Fehler beim Prüfen der Antworten");
+    } finally {
+      setLoading(false);
     }
-
-    const data: CheckAnswersResponse = await res.json();
-
-    console.log("Antwort von Server:", data);
-
-    setCheckResult(data.checkResult);
-    setPointsReached(data.pointsReached);
-    setPointsReachable(data.pointsReachable);
-
-    setTotalPointsReached((prev) => prev + data.pointsReached);
-    setTotalPointsReachable((prev) => prev + data.pointsReachable);
-  } catch (error) {
-    console.error("Fehler beim POST:", error);
-    alert("Fehler beim Prüfen der Antworten");
-  } finally {
-    setLoading(false);
   }
-}
 
 
   function handleNextQuestion() {
@@ -128,38 +129,38 @@ export default function QuestionsClient({ questions }: Props) {
         )}
         <ul className={styles.answersList}>
           {currentQuestion.answers.map((answer) => {
-  const isChecked = !!selectedAnswers[answer.guid]; // Ob Nutzer angeklickt hat
-const isCorrect = checkResult?.[answer.guid];      // Ob seine Entscheidung korrekt war
+            const isChecked = !!selectedAnswers[answer.guid]; // Ob Nutzer angeklickt hat
+            const isCorrect = checkResult?.[answer.guid];      // Ob seine Entscheidung korrekt war
 
-const answerClassName = [
-  styles.answerItem,
-  checkResult
-    ? isCorrect
-      ? isChecked
-        ? styles.correctAnswer // ✅ Richtig angekreuzt
-        : ""                   // ✅ Richtig ausgelassen – keine Farbe
-      : isChecked
-        ? styles.wrongAnswer   // ❌ Falsch angekreuzt
-        : styles.correctAnswer // ❌ Falsch ausgelassen
-    : "",
-]
-  .filter(Boolean)
-  .join(" ");
+            const answerClassName = [
+              styles.answerItem,
+              checkResult
+                ? isCorrect
+                  ? isChecked
+                    ? styles.correctAnswer // ✅ Richtig angekreuzt
+                    : ""                   // ✅ Richtig ausgelassen – keine Farbe
+                  : isChecked
+                    ? styles.wrongAnswer   // ❌ Falsch angekreuzt
+                    : styles.correctAnswer // ❌ Falsch ausgelassen
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
 
-  return (
-    <li key={answer.guid} className={answerClassName}>
-      <input
-        type="checkbox"
-        checked={isChecked}
-        onChange={() => toggleAnswer(answer.guid)}
-        disabled={!!checkResult} // Keine Änderung nach Auswertung
-        className={styles.checkbox}
-      />
-      <span>{answer.text}</span>
-    </li>
-  );
-})}
+            return (
+              <li key={answer.guid} className={answerClassName}>
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => toggleAnswer(answer.guid)}
+                  disabled={!!checkResult} // Keine Änderung nach Auswertung
+                  className={styles.checkbox}
+                />
+                <span>{answer.text}</span>
+              </li>
+            );
+          })}
 
 
         </ul>
@@ -174,8 +175,9 @@ const answerClassName = [
           </button>
         ) : (
           <button className={styles.actionButton} onClick={handleNextQuestion}>
-            Nächste Frage
+            {isLastQuestion ? "Abschließen" : "Nächste Frage"}
           </button>
+
         )}
       </div>
 
@@ -195,7 +197,7 @@ const answerClassName = [
             Du hast insgesamt <strong>{totalPointsReached}</strong> von{" "}
             <strong>{totalPointsReachable}</strong> Punkten erreicht.
           </p>
-          <p>Möchtest du zur Fragenübersicht zurückkehren?</p>
+          <p>Möchtest du zur Modulübersicht zurückkehren?</p>
         </ModalDialog>
       )}
     </div>
